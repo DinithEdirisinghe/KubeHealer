@@ -1,0 +1,22 @@
+# values-kafka.yaml
+global:
+  security:
+    allowInsecureImages: true
+image:
+  registry: docker.io
+  repository: apache/kafka
+  tag: "3.8.0"
+controller:
+  replicaCount: 1
+  persistence:
+    enabled: false
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+listeners:
+  client:
+    protocol: PLAINTEXT

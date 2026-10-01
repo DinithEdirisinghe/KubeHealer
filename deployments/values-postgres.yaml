@@ -1,0 +1,16 @@
+# values-postgres.yaml
+auth:
+  postgresPassword: "kubehealerpostgres"
+  username: "kubehealer"
+  password: "kubehealerpassword"
+  database: "kubehealer"
+primary:
+  persistence:
+    enabled: false
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi

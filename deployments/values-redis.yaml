@@ -1,0 +1,15 @@
+# values-redis.yaml
+architecture: standalone
+auth:
+  enabled: true
+  password: "kubehealerredis"
+master:
+  persistence:
+    enabled: false
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi

@@ -1,0 +1,31 @@
+# values-prometheus-light.yaml
+# Lightweight Prometheus & Alertmanager for local dev
+grafana:
+  enabled: false
+
+nodeExporter:
+  enabled: false
+
+kubeStateMetrics:
+  enabled: false
+
+prometheus:
+  prometheusSpec:
+    retention: 1d
+    resources:
+      limits:
+        cpu: 250m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 100Mi
+
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      limits:
+        cpu: 150m
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi

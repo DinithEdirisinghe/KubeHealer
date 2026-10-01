@@ -1,0 +1,25 @@
+# values-prometheus.yaml
+prometheus:
+  prometheusSpec:
+    retention: 1d
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      limits:
+        cpu: 250m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+
+grafana:
+  enabled: true
+  adminPassword: "kubehealergrafana"
