@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package executor.v1;
+
+option go_package = "github.com/kubehealer/kubehealer/proto/executor/v1;executorv1";
+
+// ExecutionService defines the gRPC interface for isolated cluster mutations.
+// This service is implemented by k8s-executor (Go) and called by agent-worker (Python) / dashboard-api.
+service ExecutionService {
+  // ApplyPatch applies a YAML/JSON patch to a Kubernetes target (Deployment, StatefulSet, etc.)
+  rpc ApplyPatch (ApplyPatchRequest) returns (ApplyPatchResponse);
+
+  // RolloutRestart gracefully restarts a target deployment
+  rpc RolloutRestart (RolloutRestartRequest) returns (RolloutRestartResponse);
+
+  // RollbackDeployment rolls back a target deployment to its previous revision
+  rpc RollbackDeployment (RollbackRequest) returns (RollbackResponse);
+
+  // VerifyHealth polls pod health for a specified duration post-remediation
+  rpc VerifyHealth (VerifyHealthRequest) returns (VerifyHealthResponse);
+}
+
+message ApplyPatchRequest {
+  string incident_id = 1;
+  string namespace = 2;
+  string target_kind = 3;    // e.g. "Deployment"
+  string target_name = 4;    // e.g. "oom-service"
+  string patch_type = 5;     // e.g. "application/strategic-merge-patch+json"
+  bytes patch_payload = 6;   // YAML or JSON patch content
+}
+
+message ApplyPatchResponse {
+  bool success = 1;
+  string message = 2;
+  int64 applied_at_unix = 3;
+}
+
+message RolloutRestartRequest {
+  string incident_id = 1;
+  string namespace = 2;
+  string target_kind = 3;
+  string target_name = 4;
+}
+
+message RolloutRestartResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message RollbackRequest {
+  string incident_id = 1;
+  string namespace = 2;
+  string target_kind = 3;
+  string target_name = 4;
+  int32 revision = 5;
+}
+
+message RollbackResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message VerifyHealthRequest {
+  string incident_id = 1;
+  string namespace = 2;
+  string target_name = 3;
+  int32 timeout_seconds = 4;
+}
+
+message VerifyHealthResponse {
+  bool healthy = 1;
+  string details = 2;
+  int32 restart_count = 3;
+}
