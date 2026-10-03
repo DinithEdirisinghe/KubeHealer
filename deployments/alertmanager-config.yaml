@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: kubehealer-alertmanager-config
+  namespace: kubehealer-infra
+  labels:
+    release: prometheus
+spec:
+  route:
+    groupBy: ['alertname', 'namespace', 'pod']
+    groupWait: 5s
+    groupInterval: 10s
+    repeatInterval: 1m
+    receiver: 'kubehealer-gateway-receiver'
+  receivers:
+    - name: 'kubehealer-gateway-receiver'
+      webhookConfigs:
+        - url: 'http://alert-gateway.kubehealer-system.svc.cluster.local:8080/api/v1/alerts'
+          sendResolved: true

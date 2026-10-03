@@ -1,0 +1,30 @@
+# test-workloads/oom-service.yaml
+# Intentionally broken app: Memory Limit = 64Mi, Script allocates = 128Mi
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oom-service
+  namespace: sandbox-apps
+  labels:
+    app: oom-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oom-service
+  template:
+    metadata:
+      labels:
+        app: oom-service
+    spec:
+      containers:
+        - name: oom-simulator
+          image: python:3.11-slim
+          command: ["python", "-c", "import time; print('Allocating memory...'); a = 'x' * (128 * 1024 * 1024); time.sleep(3600)"]
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"

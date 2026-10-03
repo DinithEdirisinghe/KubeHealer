@@ -1,0 +1,26 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: kubehealer-rules
+  namespace: kubehealer-infra
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: kubehealer.rules
+      rules:
+        - alert: PodOOMKilled
+          expr: kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1 or kube_pod_container_status_restarts_total > 0
+          for: 0m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod OOMKilled in sandbox-apps"
+
+        - alert: PodCrashLoopBackOff
+          expr: kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"} == 1
+          for: 0m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod CrashLoopBackOff in sandbox-apps"

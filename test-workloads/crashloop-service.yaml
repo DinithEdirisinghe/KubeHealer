@@ -1,0 +1,30 @@
+# test-workloads/crashloop-service.yaml
+# Intentionally broken app: Crashes on missing DATABASE_URL environment variable
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crashloop-service
+  namespace: sandbox-apps
+  labels:
+    app: crashloop-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crashloop-service
+  template:
+    metadata:
+      labels:
+        app: crashloop-service
+    spec:
+      containers:
+        - name: app
+          image: python:3.11-slim
+          command: ["python", "-c", "import os, sys; print('Checking config...'); db = os.environ['DATABASE_URL']"]
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"
