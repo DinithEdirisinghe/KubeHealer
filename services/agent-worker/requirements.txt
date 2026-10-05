@@ -1,0 +1,11 @@
+langgraph>=0.1.0
+langchain-core>=0.2.0
+langchain-google-genai>=1.0.0
+kafka-python>=2.0.2
+kubernetes>=29.0.0
+redis>=5.0.0
+psycopg2-binary>=2.9.9
+grpcio>=1.64.0
+grpcio-tools>=1.64.0
+pyyaml>=6.0.1
+pydantic>=2.7.0

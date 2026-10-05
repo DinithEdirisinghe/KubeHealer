@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-worker
+  namespace: kubehealer-system
+  labels:
+    app: agent-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent-worker
+  template:
+    metadata:
+      labels:
+        app: agent-worker
+    spec:
+      containers:
+        - name: agent-worker
+          image: kubehealer/agent-worker:dev
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: KAFKA_BROKER
+              value: "kafka.kubehealer-infra.svc.cluster.local:9092"
+            - name: REDIS_HOST
+              value: "redis-master.kubehealer-infra.svc.cluster.local:6379"
+            - name: REDIS_PASSWORD
+              value: "kubehealerredis"
+            - name: PROMETHEUS_URL
+              value: "http://prometheus-prometheus-kube-prometheus-prometheus.kubehealer-infra.svc.cluster.local:9090"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
