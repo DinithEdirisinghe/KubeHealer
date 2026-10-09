@@ -2,11 +2,32 @@ package executorv1
 
 import (
 	context "context"
+	json "encoding/json"
 
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
+	encoding "google.golang.org/grpc/encoding"
 	status "google.golang.org/grpc/status"
 )
+
+type JSONCodec struct{}
+
+func (JSONCodec) Marshal(v any) ([]byte, error) {
+	return json.Marshal(v)
+}
+
+func (JSONCodec) Unmarshal(data []byte, v any) error {
+	return json.Unmarshal(data, v)
+}
+
+func (JSONCodec) Name() string {
+	return "json"
+}
+
+func init() {
+	encoding.RegisterCodec(JSONCodec{})
+}
+
 
 type ApplyPatchRequest struct {
 	IncidentId   string `json:"incident_id,omitempty"`

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KubeHealer | Autonomous SRE Copilot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains+Mono', monospace; }
+    .terminal-scroll::-webkit-scrollbar { width: 6px; }
+    .terminal-scroll::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Top Navigation Bar -->
+  <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+    <div class="flex items-center space-x-3">
+      <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+        <i class="fa-solid fa-shield-heart text-white text-lg"></i>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-bold text-lg tracking-tight text-white">KubeHealer</span>
+          <span class="text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded-full font-medium">SRE Copilot</span>
+        </div>
+        <p class="text-xs text-slate-400">Autonomous Kubernetes Incident Remediation Platform</p>
+      </div>
+    </div>
+
+    <!-- Cluster Status Indicators -->
+    <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs">
+        <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-slate-300">Cluster: <strong class="text-white">kind-kubehealer</strong></span>
+      </div>
+      <div id="conn-status" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs">
+        <span id="conn-dot" class="h-2 w-2 rounded-full bg-amber-400"></span>
+        <span id="conn-text" class="text-slate-300">Connecting to Stream...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Grid Layout -->
+  <main class="flex-1 p-6 grid grid-cols-12 gap-6 overflow-hidden max-w-[1800px] w-full mx-auto">
+
+    <!-- Column 1: Active Incidents List (3 Cols) -->
+    <section class="col-span-12 lg:col-span-3 flex flex-col space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 flex items-center space-x-2">
+          <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
+          <span>Active Incidents</span>
+        </h2>
+        <span id="incident-count" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">0</span>
+      </div>
+
+      <div id="incidents-container" class="flex-1 space-y-3 overflow-y-auto pr-1">
+        <!-- Placeholder / Empty State -->
+        <div id="no-incidents" class="p-6 rounded-xl border border-dashed border-slate-800 text-center text-slate-500">
+          <i class="fa-regular fa-circle-check text-2xl text-emerald-500/50 mb-2"></i>
+          <p class="text-sm font-medium">Cluster Healthy</p>
+          <p class="text-xs text-slate-600 mt-1">Listening on Kafka topic for new incident alerts...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Column 2: Agent Thought Stream (5 Cols) -->
+    <section class="col-span-12 lg:col-span-5 flex flex-col space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 flex items-center space-x-2">
+          <i class="fa-solid fa-brain text-cyan-400"></i>
+          <span>AI Diagnostics & Reasoning</span>
+        </h2>
+        <span class="text-xs text-cyan-400/80 font-mono">LangGraph Cyclic Agent</span>
+      </div>
+
+      <div class="flex-1 bg-slate-900 border border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-2xl">
+        <div class="px-4 py-2.5 border-b border-slate-800 bg-slate-900/80 flex items-center justify-between text-xs text-slate-400">
+          <div class="flex items-center space-x-2">
+            <span class="h-2.5 w-2.5 rounded-full bg-red-500/80"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-amber-500/80"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-emerald-500/80"></span>
+            <span class="font-mono text-slate-500 ml-2">telemetry://incident.diagnostics.stream</span>
+          </div>
+          <button onclick="clearLogs()" class="hover:text-slate-200 transition"><i class="fa-solid fa-trash-can"></i></button>
+        </div>
+
+        <div id="terminal-body" class="flex-1 p-4 mono text-xs text-slate-300 overflow-y-auto space-y-2 terminal-scroll bg-slate-950/70">
+          <div class="text-slate-600">-- [KubeHealer AI Agent Telemetry Console initialized] --</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Column 3: Human Approval Gate & YAML Diff (4 Cols) -->
+    <section class="col-span-12 lg:col-span-4 flex flex-col space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 flex items-center space-x-2">
+          <i class="fa-solid fa-code-compare text-indigo-400"></i>
+          <span>HITL Approval Gate</span>
+        </h2>
+        <span id="gate-status" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 font-medium">Idle</span>
+      </div>
+
+      <div id="remediation-panel" class="flex-1 bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col justify-between space-y-4 shadow-2xl">
+        
+        <!-- Empty Placeholder -->
+        <div id="empty-remediation" class="my-auto text-center py-12 text-slate-500">
+          <i class="fa-solid fa-lock text-3xl text-slate-700 mb-3"></i>
+          <p class="text-sm font-medium">Approval Gate Locked</p>
+          <p class="text-xs text-slate-600 mt-1 max-w-[240px] mx-auto">Awaiting AI diagnosis and proposed patch from LangGraph...</p>
+        </div>
+
+        <!-- Proposal Content (Hidden until proposal arrives) -->
+        <div id="proposal-content" class="hidden flex-1 flex flex-col space-y-4">
+          <!-- Diagnosis Box -->
+          <div>
+            <div class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">Root Cause Diagnosis</div>
+            <div id="diagnosis-text" class="p-3 bg-slate-950/80 border border-slate-800 rounded-lg text-xs text-slate-200"></div>
+          </div>
+
+          <!-- Risk Score & Target -->
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="p-2.5 bg-slate-950/80 border border-slate-800 rounded-lg">
+              <span class="text-slate-500 block mb-0.5">Risk Score</span>
+              <span id="risk-score" class="font-bold text-emerald-400">Low</span>
+            </div>
+            <div class="p-2.5 bg-slate-950/80 border border-slate-800 rounded-lg">
+              <span class="text-slate-500 block mb-0.5">Target Deployment</span>
+              <span id="target-deploy" class="font-bold text-white mono">oom-service</span>
+            </div>
+          </div>
+
+          <!-- Proposed Patch JSON / YAML -->
+          <div class="flex-1 flex flex-col">
+            <div class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 flex items-center justify-between">
+              <span>Proposed Cluster Patch (Strategic Merge)</span>
+              <span class="text-cyan-400 mono text-[10px]">k8s-executor</span>
+            </div>
+            <pre id="patch-code" class="flex-1 p-3 bg-slate-950 rounded-lg border border-slate-800 mono text-[11px] text-cyan-300 overflow-x-auto terminal-scroll max-h-[220px]"></pre>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="pt-2 border-t border-slate-800 flex items-center space-x-3">
+            <button id="approve-btn" onclick="approveIncident()" class="flex-1 py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold rounded-lg shadow-lg shadow-emerald-900/30 text-xs flex items-center justify-center space-x-2 transition">
+              <i class="fa-solid fa-check"></i>
+              <span>Approve & Execute Patch</span>
+            </button>
+            <button onclick="rejectIncident()" class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-lg text-xs transition">
+              Reject
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const API_BASE = 'http://localhost:8080';
+    let currentIncident = null;
+    let eventSource = null;
+
+    function initSSE() {
+      const connDot = document.getElementById('conn-dot');
+      const connText = document.getElementById('conn-text');
+
+      eventSource = new EventSource(`${API_BASE}/api/v1/stream`);
+
+      eventSource.onopen = () => {
+        connDot.className = "h-2 w-2 rounded-full bg-emerald-400";
+        connText.innerText = "Stream Live";
+        fetchIncidents();
+      };
+
+      eventSource.onerror = () => {
+        connDot.className = "h-2 w-2 rounded-full bg-amber-400 animate-pulse";
+        connText.innerText = "Stream Reconnecting (Polling Active)";
+      };
+
+      eventSource.addEventListener("ping", () => {
+        connDot.className = "h-2 w-2 rounded-full bg-emerald-400";
+        connText.innerText = "Stream Live";
+      });
+
+      eventSource.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          handleStreamEvent(payload);
+        } catch (e) {
+          console.error("Failed to parse SSE payload:", e);
+        }
+      };
+    }
+
+    function appendTerminal(msg, type = "info") {
+      const body = document.getElementById('terminal-body');
+      const line = document.createElement('div');
+      line.className = "leading-relaxed";
+
+      const time = new Date().toLocaleTimeString();
+      let prefix = `<span class="text-slate-600">[${time}]</span> `;
+
+      if (type === "thought") {
+        prefix += `<span class="text-cyan-400">[THOUGHT]</span> `;
+      } else if (type === "proposal") {
+        prefix += `<span class="text-amber-400">[PROPOSAL]</span> `;
+      } else if (type === "execution") {
+        prefix += `<span class="text-emerald-400">[EXECUTOR]</span> `;
+      }
+
+      line.innerHTML = prefix + `<span class="text-slate-200">${msg}</span>`;
+      body.appendChild(line);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    function handleStreamEvent(event) {
+      if (event.type === "diagnostic") {
+        appendTerminal(event.data.message, event.data.step_type);
+      } else if (event.type === "proposal") {
+        appendTerminal(`Remediation proposal generated for ${event.data.target_name}`, "proposal");
+        displayProposal(event.data);
+      } else if (event.type === "execution") {
+        appendTerminal(`Executor: ${event.message}`, "execution");
+        document.getElementById('gate-status').className = "text-xs px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800";
+        document.getElementById('gate-status').innerText = "Executed";
+        document.getElementById('approve-btn').disabled = true;
+        document.getElementById('approve-btn').innerHTML = '<i class="fa-solid fa-check-double"></i><span>Executed & Verified</span>';
+        document.getElementById('approve-btn').className = "flex-1 py-2.5 px-4 bg-slate-800 text-emerald-400 font-semibold rounded-lg text-xs flex items-center justify-center space-x-2 cursor-not-allowed";
+      }
+    }
+
+    function displayProposal(prop) {
+      currentIncident = prop;
+      document.getElementById('empty-remediation').classList.add('hidden');
+      document.getElementById('proposal-content').classList.remove('hidden');
+
+      document.getElementById('diagnosis-text').innerText = prop.diagnosis_summary;
+      document.getElementById('risk-score').innerText = prop.risk_score || "Low";
+      document.getElementById('target-deploy').innerText = `${prop.namespace}/${prop.target_name}`;
+
+      try {
+        const parsed = JSON.parse(prop.proposed_patch_yaml);
+        document.getElementById('patch-code').innerText = JSON.stringify(parsed, null, 2);
+      } catch (e) {
+        document.getElementById('patch-code').innerText = prop.proposed_patch_yaml;
+      }
+
+      document.getElementById('gate-status').className = "text-xs px-2.5 py-0.5 rounded-full bg-amber-950 text-amber-400 border border-amber-800 animate-pulse";
+      document.getElementById('gate-status').innerText = "Awaiting Approval";
+
+      addIncidentCard(prop);
+    }
+
+    function addIncidentCard(prop) {
+      const container = document.getElementById('incidents-container');
+      const empty = document.getElementById('no-incidents');
+      if (empty) empty.classList.add('hidden');
+
+      let card = document.getElementById(`card-${prop.incident_id}`);
+      if (!card) {
+        card = document.createElement('div');
+        card.id = `card-${prop.incident_id}`;
+        card.className = "p-3.5 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl transition cursor-pointer";
+        container.prepend(card);
+      }
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-bold text-red-400 flex items-center space-x-1.5">
+            <span class="h-1.5 w-1.5 rounded-full bg-red-500 animate-ping"></span>
+            <span>CRITICAL</span>
+          </span>
+          <span class="text-[10px] mono text-slate-500">${prop.incident_id}</span>
+        </div>
+        <div class="font-semibold text-xs text-white">${prop.target_name}</div>
+        <div class="text-[11px] text-slate-400 truncate mt-0.5">${prop.diagnosis_summary}</div>
+      `;
+
+      document.getElementById('incident-count').innerText = container.querySelectorAll('[id^="card-"]').length;
+    }
+
+    async function fetchIncidents() {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/incidents`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        
+        const connText = document.getElementById('conn-text');
+        if (connText.innerText === "Connecting to Stream...") {
+          connText.innerText = "API Connected";
+          document.getElementById('conn-dot').className = "h-2 w-2 rounded-full bg-emerald-400";
+        }
+
+        if (data.incidents && data.incidents.length > 0) {
+          data.incidents.forEach(p => displayProposal(p));
+        }
+        if (data.logs && data.logs.length > 0) {
+          data.logs.forEach(l => appendTerminal(l.message, l.step_type));
+        }
+      } catch (e) {
+        console.warn("fetchIncidents error:", e);
+      }
+    }
+
+    async function approveIncident() {
+      if (!currentIncident) return;
+      const btn = document.getElementById('approve-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i><span>Applying Patch via gRPC...</span>';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/incidents/${currentIncident.incident_id}/approve`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (data.success) {
+          appendTerminal(`Patch applied successfully: ${data.message}`, "execution");
+        } else {
+          const errMsg = data.message || data.error || JSON.stringify(data);
+          appendTerminal(`Execution error: ${errMsg}`, "execution");
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i><span>Retry Approval</span>';
+        }
+      } catch (e) {
+        appendTerminal(`Failed to send approval request: ${e}`, "execution");
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i><span>Retry Approval</span>';
+      }
+    }
+
+    function rejectIncident() {
+      appendTerminal("Incident remediation rejected by engineer.", "execution");
+      document.getElementById('proposal-content').classList.add('hidden');
+      document.getElementById('empty-remediation').classList.remove('hidden');
+      document.getElementById('gate-status').innerText = "Rejected";
+      document.getElementById('gate-status').className = "text-xs px-2.5 py-0.5 rounded-full bg-red-950 text-red-400 border border-red-800";
+    }
+
+    function clearLogs() {
+      document.getElementById('terminal-body').innerHTML = '<div class="text-slate-600">-- [Console cleared] --</div>';
+    }
+
+    window.onload = () => {
+      fetchIncidents();
+      initSSE();
+      setInterval(fetchIncidents, 3000);
+    };
+  </script>
+</body>
+</html>

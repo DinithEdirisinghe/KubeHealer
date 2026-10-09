@@ -1,35 +1,33 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: alert-gateway
+  name: dashboard-api
   namespace: kubehealer-system
   labels:
-    app: alert-gateway
+    app: dashboard-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: alert-gateway
+      app: dashboard-api
   template:
     metadata:
       labels:
-        app: alert-gateway
+        app: dashboard-api
     spec:
       containers:
-        - name: alert-gateway
-          image: kubehealer/alert-gateway:dev
+        - name: dashboard-api
+          image: kubehealer/dashboard-api:dev
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8080
+            - containerPort: 8081
           env:
-            - name: REDIS_HOST
-              value: "redis-master.kubehealer-infra.svc.cluster.local:6379"
-            - name: REDIS_PASSWORD
-              value: "kubehealerredis"
+            - name: PORT
+              value: "8081"
             - name: KAFKA_BROKER
               value: "kafka.kubehealer-infra.svc.cluster.local:9092"
-            - name: PORT
-              value: "8080"
+            - name: EXECUTOR_GRPC_ADDR
+              value: "k8s-executor.kubehealer-system.svc.cluster.local:50051"
           resources:
             requests:
               memory: "32Mi"
@@ -41,13 +39,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: alert-gateway
+  name: dashboard-api
   namespace: kubehealer-system
 spec:
   type: NodePort
   selector:
-    app: alert-gateway
+    app: dashboard-api
   ports:
-    - port: 8080
-      targetPort: 8080
-      nodePort: 30080
+    - port: 8081
+      targetPort: 8081
+      nodePort: 30090

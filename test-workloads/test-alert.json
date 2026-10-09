@@ -1,0 +1,21 @@
+{
+  "receiver": "kubehealer-gateway-receiver",
+  "status": "firing",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "PodOOMKilled",
+        "severity": "critical",
+        "namespace": "sandbox-apps",
+        "pod": "oom-service-7c58bbdbb-tpbgq",
+        "deployment": "oom-service"
+      },
+      "annotations": {
+        "summary": "Pod OOMKilled in sandbox-apps"
+      },
+      "startsAt": "2026-10-08T00:00:00Z",
+      "fingerprint": "oom-fp-003"
+    }
+  ]
+}
