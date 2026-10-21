@@ -1,0 +1,21 @@
+# deployments/agent-worker-scaler.yaml
+# KEDA ScaledObject: Dynamically scale agent-worker based on Kafka topic consumer lag
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: agent-worker-scaler
+  namespace: kubehealer-system
+spec:
+  scaleTargetRef:
+    name: agent-worker
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  cooldownPeriod: 30       # Wait 30 seconds after lag hits 0 before scaling down
+  pollingInterval: 5      # Check Kafka topic lag every 5 seconds
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: kafka.kubehealer-infra.svc.cluster.local:9092
+        consumerGroup: agent-worker-group
+        topic: incident.alerts.raw
+        lagThreshold: "2" # Scale 1 pod for every 2 unread alerts in the queue
