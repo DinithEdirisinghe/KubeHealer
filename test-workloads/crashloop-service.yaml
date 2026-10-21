@@ -20,7 +20,7 @@ spec:
       containers:
         - name: app
           image: python:3.11-slim
-          command: ["python", "-c", "import os, sys; print('Checking config...'); db = os.environ['DATABASE_URL']"]
+          command: ["python", "-c", "import os, time; print('Checking config...'); db = os.environ['DATABASE_URL']; print('Connected to DB:', db); time.sleep(3600)"]
           resources:
             requests:
               memory: "32Mi"

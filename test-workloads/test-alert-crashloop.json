@@ -1,0 +1,21 @@
+{
+  "receiver": "kubehealer-gateway-receiver",
+  "status": "firing",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "CrashLoopBackOff",
+        "severity": "critical",
+        "namespace": "sandbox-apps",
+        "pod": "crashloop-service",
+        "deployment": "crashloop-service"
+      },
+      "annotations": {
+        "summary": "Pod CrashLoopBackOff: Container app exited with error in sandbox-apps"
+      },
+      "startsAt": "2026-10-21T18:00:00Z",
+      "fingerprint": "crashloop-fp-001"
+    }
+  ]
+}
