@@ -18,4 +18,4 @@ spec:
         bootstrapServers: kafka.kubehealer-infra.svc.cluster.local:9092
         consumerGroup: agent-worker-group
         topic: incident.alerts.raw
-        lagThreshold: "2" # Scale 1 pod for every 2 unread alerts in the queue
+        lagThreshold: "2" # scale 1 pod for every 2 unread alerts in the queue

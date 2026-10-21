@@ -1,5 +1,5 @@
 # test-workloads/simulate-alert-storm.ps1
-# Dispatches 10 distinct alerts to simulate a cluster-wide outage and trigger KEDA autoscaling
+# dispatches 10 distinct alerts to simulate a cluster-wide outage and trigger KEDA autoscaling
 
 $uri = "http://localhost/api/v1/alerts"
 Write-Host "==========================================================" -ForegroundColor Cyan
